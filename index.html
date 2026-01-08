@@ -3,173 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Manager - Dark Edition</title>
+    <title>Account Manager - Matrix Edition</title>
     <style>
-        /* تصميم الوضع الليلي الاحترافي */
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #0f0f0f; 
-            color: #e0e0e0; 
-            margin: 0;
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { 
-            background: #1a1a1a; 
+        /* تصميم الهكر والماتركس */
+        body { margin: 0; overflow-x: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: #00ff41; }
+        canvas { position: fixed; top: 0; left: 0; z-index: -1; }
+
+        .wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        
+        #login-screen, .container { 
+            background: rgba(10, 10, 10, 0.9); 
             padding: 30px; 
             border-radius: 15px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7); 
-            max-width: 800px; 
-            width: 100%;
-            display: none; /* مخفي حتى كتابة الباسورد */
+            border: 1px solid #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+            width: 100%; max-width: 600px;
         }
-        h2 { color: #a855f7; text-align: center; margin-top: 0; }
         
-        /* شاشة الدخول */
-        #login-screen {
-            background: #1a1a1a;
-            padding: 40px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-            width: 350px;
-        }
+        .container { display: none; max-width: 800px; }
 
-        label { display: block; margin-bottom: 10px; font-weight: bold; color: #bbb; }
-        
+        h2 { text-align: center; text-shadow: 0 0 10px #00ff41; }
+
         textarea, input { 
-            width: 100%; 
-            background: #262626; 
-            border: 1px solid #333; 
-            color: #fff; 
-            padding: 12px; 
-            border-radius: 8px; 
-            box-sizing: border-box;
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-        
-        input:focus, textarea:focus {
-            border-color: #a855f7;
-            outline: none;
-            background: #2d2d2d;
+            width: 100%; background: #000; border: 1px solid #00ff41; 
+            color: #00ff41; padding: 12px; border-radius: 5px; margin-bottom: 15px;
+            box-sizing: border-box; font-family: monospace;
         }
 
-        .btn-action { 
-            background: #a855f7; 
-            color: #fff; 
-            border: none; 
-            padding: 14px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            width: 100%; 
-            font-size: 16px;
-            transition: 0.3s;
+        .btn { 
+            width: 100%; padding: 12px; border: none; border-radius: 5px; 
+            cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s;
+            margin-bottom: 10px;
         }
-        .btn-action:hover { background: #9333ea; transform: translateY(-2px); }
+        .btn-main { background: #00ff41; color: #000; }
+        .btn-main:hover { background: #003300; color: #00ff41; box-shadow: 0 0 15px #00ff41; }
+        .btn-download { background: #008cff; color: #fff; }
+        .btn-copy { background: #555; color: #fff; }
 
-        .result-area { margin-top: 25px; border-top: 1px solid #333; padding-top: 20px; }
-        pre { 
-            background: #000; 
-            color: #22c55e; 
-            padding: 15px; 
-            border-radius: 8px; 
-            overflow-x: auto; 
-            text-align: left; 
-            direction: ltr;
-            font-family: 'Consolas', monospace;
-            border: 1px solid #22c55e44;
-        }
-        .copy-btn { background: #06b6d4; margin-top: 10px; }
-        .copy-btn:hover { background: #0891b2; }
+        .stats { font-size: 14px; margin-bottom: 10px; color: #00ff41; font-weight: bold; }
+
+        /* سجل العمليات */
+        .history { margin-top: 20px; border-top: 1px dashed #00ff41; padding-top: 10px; }
+        .history-item { font-size: 12px; background: rgba(255,255,255,0.05); padding: 5px; margin-bottom: 5px; border-radius: 3px; }
+
+        pre { background: #000; padding: 15px; border: 1px solid #333; overflow-x: auto; color: #00ff41; direction: ltr; text-align: left; }
     </style>
 </head>
 <body>
 
-<div id="login-screen">
-    <h2>تسجيل الدخول</h2>
-    <p style="color: #777;">أدخل كلمة المرور الخاصة بالموقع</p>
-    <input type="password" id="sitePass" placeholder="كلمة المرور">
-    <button class="btn-action" onclick="checkAccess()">دخول</button>
-</div>
+<canvas id="matrix"></canvas>
 
-<div class="container" id="mainContent">
-    <h2>نظام تحديث الحسابات الذكي</h2>
-    
-    <div class="input-group">
-        <label>1. الصق الحسابات هنا (user : pass):</label>
-        <textarea id="accountsInput" rows="6" placeholder="adham : 12345&#10;user2 : password"></textarea>
+<div class="wrapper">
+    <div id="login-screen">
+        <h2>SECURITY CHECK</h2>
+        <input type="password" id="sitePass" placeholder="ENTER ACCESS CODE">
+        <button class="btn btn-main" onclick="checkAccess()">ACCESS SYSTEM</button>
     </div>
 
-    <div class="input-group">
-        <label>2. كلمة المرور الجديدة الموحدة:</label>
-        <input type="text" id="newPassword" placeholder="مثلاً: faker">
-    </div>
-    
-    <button class="btn-action" onclick="updateAllPasswords()">تحديث جميع الحسابات</button>
+    <div class="container" id="mainContent">
+        <h2>ACCOUNT MODIFIER v2.0</h2>
+        
+        <div class="stats" id="counter">الحسابات المكتشفة: 0</div>
 
-    <div id="resultContainer" class="result-area" style="display:none;">
-        <label>القائمة الجديدة (جاهزة للنسخ):</label>
-        <pre id="outputArea"></pre>
-        <button class="btn-action copy-btn" onclick="copyResult()">نسخ القائمة بالكامل ✅</button>
+        <textarea id="accountsInput" rows="5" placeholder="user : oldpass" oninput="updateCounter()"></textarea>
+        <input type="text" id="newPassword" placeholder="كلمة المرور الجديدة">
+        
+        <button class="btn btn-main" onclick="processAll()">تعديل وتحويل القائمة</button>
+
+        <div id="resultArea" style="display:none;">
+            <pre id="outputArea"></pre>
+            <button class="btn btn-copy" onclick="copyResult()">نسخ النص</button>
+            <button class="btn btn-download" onclick="downloadText()">تحميل كملف accounts.txt 📄</button>
+        </div>
+
+        <div class="history" id="historyLog">
+            <strong>سجل العمليات (آخر التحويلات):</strong>
+            <div id="logItems"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    // كلمة المرور التي اخترتها أنت
-    const ACCESS_PASSWORD = "2006"; 
+    // خلفية الماتركس
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
 
-    function checkAccess() {
-        const pass = document.getElementById('sitePass').value;
-        if(pass === ACCESS_PASSWORD) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-        } else {
-            alert("كلمة المرور غير صحيحة يا أدهم!");
+    function drawMatrix() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#00ff41";
+        ctx.font = fontSize + "px monospace";
+        for (let i = 0; i < drops.length; i++) {
+            const text = letters[Math.floor(Math.random() * letters.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
         }
     }
+    setInterval(drawMatrix, 35);
 
-    // السماح بالدخول عند الضغط على Enter
-    document.getElementById('sitePass').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') checkAccess();
-    });
+    // نظام الموقع
+    const ACCESS_PASSWORD = "2006";
 
-    function updateAllPasswords() {
+    function checkAccess() {
+        if(document.getElementById('sitePass').value === ACCESS_PASSWORD) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        } else { alert("ACCESS DENIED"); }
+    }
+
+    function updateCounter() {
+        const lines = document.getElementById('accountsInput').value.trim().split('\n');
+        const count = lines[0] === "" ? 0 : lines.length;
+        document.getElementById('counter').innerText = `الحسابات المكتشفة: ${count}`;
+    }
+
+    function processAll() {
         const input = document.getElementById('accountsInput').value;
         const newPass = document.getElementById('newPassword').value;
-        const output = document.getElementById('outputArea');
-        const container = document.getElementById('resultContainer');
-
-        if(!input.trim() || !newPass.trim()) {
-            alert("من فضلك أدخل البيانات المطلوبة");
-            return;
-        }
+        if(!input || !newPass) return alert("أدخل البيانات");
 
         const lines = input.trim().split('\n');
-        let result = lines.map(line => {
-            if(line.includes(':')) {
-                let parts = line.split(':');
-                let username = parts[0].trim();
-                return `${username} : ${newPass}`;
-            }
-            return line; // إذا كان السطر لا يحتوي على : يتركه كما هو
-        });
+        const result = lines.map(line => line.includes(':') ? `${line.split(':')[0].trim()} : ${newPass}` : line).join('\n');
 
-        output.textContent = result.join('\n');
-        container.style.display = 'block';
+        document.getElementById('outputArea').textContent = result;
+        document.getElementById('resultArea').style.display = 'block';
+        
+        addToHistory(lines.length, newPass);
+    }
+
+    function downloadText() {
+        const text = document.getElementById('outputArea').textContent;
+        const blob = new Blob([text], { type: 'text/plain' });
+        const anchor = document.createElement('a');
+        anchor.download = 'accounts.txt';
+        anchor.href = window.URL.createObjectURL(blob);
+        anchor.click();
     }
 
     function copyResult() {
-        const text = document.getElementById('outputArea').textContent;
-        navigator.clipboard.writeText(text).then(() => {
-            alert("تم نسخ القائمة الجديدة بنجاح!");
-        });
+        navigator.clipboard.writeText(document.getElementById('outputArea').textContent);
+        alert("تم النسخ!");
+    }
+
+    function addToHistory(count, pass) {
+        const log = document.getElementById('logItems');
+        const time = new Date().toLocaleTimeString();
+        const item = `<div class="history-item">${time} - تم تعديل ${count} حساب إلى (${pass})</div>`;
+        log.innerHTML = item + log.innerHTML;
+        if(log.children.length > 5) log.lastElementChild.remove();
     }
 </script>
-
 </body>
 </html>
