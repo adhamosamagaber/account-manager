@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL - MASTER VERSION v7.0</title>
+    <title>TERMINAL - MASTER VERSION v7.1</title>
     <style>
         :root { --neon: #00ff41; --neon-dark: #003300; --error: #ff4141; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: var(--neon); }
@@ -23,7 +23,6 @@
 
         h2 { text-align: center; text-transform: uppercase; letter-spacing: 5px; margin-bottom: 30px; text-shadow: 0 0 10px var(--neon); }
         
-        /* منطقة السحب والإفلات */
         .drop-zone { border: 2px dashed var(--neon-dark); padding: 20px; text-align: center; margin-bottom: 15px; transition: 0.3s; cursor: pointer; }
         .drop-zone.dragover { background: rgba(0, 255, 65, 0.1); border-color: var(--neon); }
 
@@ -31,19 +30,20 @@
             width: 100%; background: #000; border: 1px solid var(--neon-dark); color: var(--neon); 
             padding: 15px; border-radius: 3px; margin-bottom: 15px; box-sizing: border-box; font-size: 14px;
         }
-        textarea:focus { border-color: var(--neon); outline: none; box-shadow: 0 0 10px var(--neon-dark); }
+        textarea:focus { border-color: var(--neon); outline: none; }
 
-        /* لوحة التحليل الذكي */
         .analytics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; font-size: 11px; text-align: center; background: #050505; padding: 10px; border: 1px solid #111; }
-        .analytics span { color: #888; }
         .analytics b { color: var(--neon); display: block; font-size: 14px; }
 
-        .btn { width: 100%; padding: 15px; border: 1px solid var(--neon); background: none; color: var(--neon); cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; position: relative; overflow: hidden; }
+        .btn { width: 100%; padding: 15px; border: 1px solid var(--neon); background: none; color: var(--neon); cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
         .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 20px var(--neon); }
 
-        pre { background: #000; padding: 15px; border: 1px solid #111; color: var(--neon); text-align: left; direction: ltr; border-radius: 3px; font-size: 12px; max-height: 200px; overflow-y: auto; }
-        .typing { border-right: 2px solid var(--neon); animation: caret 0.5s infinite; }
-        @keyframes caret { 50% { border-color: transparent; } }
+        pre { background: #000; padding: 15px; border: 1px solid #111; color: var(--neon); text-align: left; direction: ltr; border-radius: 3px; font-size: 12px; max-height: 180px; overflow-y: auto; }
+        
+        /* قسم المكررات المنعزل */
+        .dup-box { margin-top: 20px; border: 1px solid var(--error); padding: 10px; display: none; background: rgba(255, 65, 65, 0.05); }
+        .dup-box h4 { color: var(--error); margin: 0 0 10px 0; font-size: 12px; text-align: center; }
+        #duplicateArea { color: var(--error); border-color: #300; }
     </style>
 </head>
 <body>
@@ -59,7 +59,7 @@
     </div>
 
     <div class="container" id="mainContent">
-        <h2>DASHBOARD_V7</h2>
+        <h2>DASHBOARD_V7.1</h2>
         
         <div class="analytics">
             <div><span>UNITS</span><b id="count">0</b></div>
@@ -76,9 +76,14 @@
         <button class="btn" onclick="executeProcess()">EXECUTE_PROCESS</button>
 
         <div id="resultArea" style="display:none; margin-top:20px;">
-            <div style="font-size: 10px; margin-bottom:5px;">OUTPUT_STREAM:</div>
+            <div style="font-size: 10px; margin-bottom:5px; color: var(--neon);">CLEAN_OUTPUT (بدون مكرر):</div>
             <pre id="outputArea"></pre>
-            <button class="btn" style="margin-top:10px; border-color: #008cff; color: #008cff;" id="downBtn" onclick="downloadText()">DOWNLOAD_RESULT</button>
+            <button class="btn" style="margin-top:10px; border-color: #008cff; color: #008cff;" id="downBtn" onclick="downloadText()">DOWNLOAD_CLEAN_LIST</button>
+            
+            <div class="dup-box" id="dupContainer">
+                <h4>⚠️ DUPLICATES_ISOLATED (الحسابات المكررة المعزولة)</h4>
+                <pre id="duplicateArea"></pre>
+            </div>
         </div>
     </div>
 </div>
@@ -93,7 +98,6 @@
 
     function ghostMode() { window.location.href = "https://www.google.com"; }
 
-    // Matrix Engine
     const canvas = document.getElementById('matrix'); const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
     const drops = Array(Math.floor(canvas.width/16)).fill(1);
@@ -108,9 +112,7 @@
     }
     setInterval(draw, 50);
 
-    // Login System
     function checkAccess() {
-        beep(400, 0.1);
         if(document.getElementById('sitePass').value === "2006") {
             beep(800, 0.2);
             document.getElementById('login-screen').style.display = 'none';
@@ -118,62 +120,61 @@
         } else alert("ACCESS DENIED");
     }
 
-    // Drag & Drop Logic
     const dropZone = document.getElementById('dropZone');
     const input = document.getElementById('accountsInput');
-
     dropZone.onclick = () => input.style.display = 'block';
-    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
-    dropZone.ondragleave = () => dropZone.classList.remove('dragover');
-    dropZone.ondrop = (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => { input.value = e.target.result; updateStats(); };
-            reader.readAsText(file);
-        }
-    };
-
-    function updateStats() {
+    
+    input.oninput = () => {
         const startTime = performance.now();
         const lines = input.value.trim().split('\n').filter(l => l !== "");
         const unique = new Set(lines.map(l => l.trim()));
         document.getElementById('count').innerText = lines.length;
         document.getElementById('dups').innerText = lines.length - unique.size;
         document.getElementById('speed').innerText = Math.floor(performance.now() - startTime) + "ms";
-    }
-    input.oninput = updateStats;
+    };
 
-    // Typewriter Engine
     function executeProcess() {
         beep(500, 0.1);
         const text = input.value.trim();
         const pass = document.getElementById('newPassword').value;
         if(!text || !pass) return;
 
-        const lines = [...new Set(text.split('\n').map(l => l.trim()))];
-        const result = lines.map(line => line.includes(':') ? `${line.split(':')[0].trim()} : ${pass}` : line).join('\n');
+        const lines = text.split('\n').map(l => l.trim());
+        const seen = new Set();
+        const cleanList = [];
+        const duplicates = [];
+
+        lines.forEach(line => {
+            if (seen.has(line)) {
+                duplicates.push(line);
+            } else {
+                seen.add(line);
+                cleanList.push(line.includes(':') ? `${line.split(':')[0].trim()} : ${pass}` : line);
+            }
+        });
 
         document.getElementById('resultArea').style.display = 'block';
         const out = document.getElementById('outputArea');
-        out.textContent = "";
-        let i = 0;
-        const speed = result.length > 1000 ? 1 : 5; // تسريع الطباعة للملفات الضخمة
+        const dupOut = document.getElementById('duplicateArea');
+        const dupCont = document.getElementById('dupContainer');
+
+        // طباعة القائمة النظيفة
+        out.textContent = cleanList.join('\n');
         
-        const timer = setInterval(() => {
-            out.textContent += result[i];
-            i++;
-            if(i % 5 === 0) beep(1200, 0.005);
-            if(i === result.length) { clearInterval(timer); beep(1500, 0.2); }
-            out.scrollTop = out.scrollHeight;
-        }, speed);
+        // عرض المكرر في مكان لوحده
+        if(duplicates.length > 0) {
+            dupCont.style.display = 'block';
+            dupOut.textContent = duplicates.join('\n');
+        } else {
+            dupCont.style.display = 'none';
+        }
+        
+        beep(1200, 0.2);
     }
 
     function downloadText() {
         const blob = new Blob([document.getElementById('outputArea').textContent], { type: 'text/plain' });
-        const a = document.createElement('a'); a.download = 'MASTER_LIST.txt';
+        const a = document.createElement('a'); a.download = 'CLEAN_LIST.txt';
         a.href = window.URL.createObjectURL(blob); a.click();
     }
 </script>
