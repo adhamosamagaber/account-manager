@@ -2,77 +2,161 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تغيير جماعي لكلمات المرور</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Manager - Dark Edition</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; padding: 20px; text-align: right; }
-        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 900px; margin: auto; }
-        h2 { color: #333; margin-bottom: 20px; }
+        /* تصميم الوضع الليلي الاحترافي */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #0f0f0f; 
+            color: #e0e0e0; 
+            margin: 0;
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { 
+            background: #1a1a1a; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7); 
+            max-width: 800px; 
+            width: 100%;
+            display: none; /* مخفي حتى كتابة الباسورد */
+        }
+        h2 { color: #a855f7; text-align: center; margin-top: 0; }
         
-        .input-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
-        
-        /* منطقة اللصق والقالب الجديد */
-        textarea { width: 100%; height: 120px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: monospace; }
-        .new-pass-input { width: 100%; padding: 12px; border: 2px solid #007bff; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        
-        .btn-action { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 17px; margin-top: 10px; }
-        .btn-action:hover { background: #218838; }
+        /* شاشة الدخول */
+        #login-screen {
+            background: #1a1a1a;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            width: 350px;
+        }
 
-        /* منطقة النتائج */
-        .result-area { margin-top: 30px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
-        pre { background: #333; color: #fff; padding: 15px; border-radius: 5px; overflow-x: auto; text-align: left; direction: ltr; }
+        label { display: block; margin-bottom: 10px; font-weight: bold; color: #bbb; }
+        
+        textarea, input { 
+            width: 100%; 
+            background: #262626; 
+            border: 1px solid #333; 
+            color: #fff; 
+            padding: 12px; 
+            border-radius: 8px; 
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        input:focus, textarea:focus {
+            border-color: #a855f7;
+            outline: none;
+            background: #2d2d2d;
+        }
+
+        .btn-action { 
+            background: #a855f7; 
+            color: #fff; 
+            border: none; 
+            padding: 14px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 100%; 
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        .btn-action:hover { background: #9333ea; transform: translateY(-2px); }
+
+        .result-area { margin-top: 25px; border-top: 1px solid #333; padding-top: 20px; }
+        pre { 
+            background: #000; 
+            color: #22c55e; 
+            padding: 15px; 
+            border-radius: 8px; 
+            overflow-x: auto; 
+            text-align: left; 
+            direction: ltr;
+            font-family: 'Consolas', monospace;
+            border: 1px solid #22c55e44;
+        }
+        .copy-btn { background: #06b6d4; margin-top: 10px; }
+        .copy-btn:hover { background: #0891b2; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>تحديث الحسابات بكلمة مرور موحدة</h2>
+<div id="login-screen">
+    <h2>تسجيل الدخول</h2>
+    <p style="color: #777;">أدخل كلمة المرور الخاصة بالموقع</p>
+    <input type="password" id="sitePass" placeholder="كلمة المرور">
+    <button class="btn-action" onclick="checkAccess()">دخول</button>
+</div>
+
+<div class="container" id="mainContent">
+    <h2>نظام تحديث الحسابات الذكي</h2>
     
     <div class="input-group">
-        <label>1. الصق قائمة الحسابات هنا (بصيغة adham : 12345):</label>
-        <textarea id="accountsInput" placeholder="adham : 12345&#10;user2 : 67890&#10;osama : password"></textarea>
+        <label>1. الصق الحسابات هنا (user : pass):</label>
+        <textarea id="accountsInput" rows="6" placeholder="adham : 12345&#10;user2 : password"></textarea>
     </div>
 
     <div class="input-group">
-        <label>2. اكتب كلمة المرور الجديدة التي تريدها للكل:</label>
-        <input type="text" id="newPassword" class="new-pass-input" placeholder="مثلاً: faker">
+        <label>2. كلمة المرور الجديدة الموحدة:</label>
+        <input type="text" id="newPassword" placeholder="مثلاً: faker">
     </div>
     
-    <button class="btn-action" onclick="updateAllPasswords()">تغيير كلمات المرور للكل الآن</button>
+    <button class="btn-action" onclick="updateAllPasswords()">تحديث جميع الحسابات</button>
 
     <div id="resultContainer" class="result-area" style="display:none;">
-        <label>النتيجة النهائية (جاهزة للنسخ):</label>
+        <label>القائمة الجديدة (جاهزة للنسخ):</label>
         <pre id="outputArea"></pre>
-        <button class="btn-action" style="background:#007bff;" onclick="copyResult()">نسخ النتيجة بالكامل</button>
+        <button class="btn-action copy-btn" onclick="copyResult()">نسخ القائمة بالكامل ✅</button>
     </div>
 </div>
 
 <script>
+    // كلمة المرور التي اخترتها أنت
+    const ACCESS_PASSWORD = "2006"; 
+
+    function checkAccess() {
+        const pass = document.getElementById('sitePass').value;
+        if(pass === ACCESS_PASSWORD) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        } else {
+            alert("كلمة المرور غير صحيحة يا أدهم!");
+        }
+    }
+
+    // السماح بالدخول عند الضغط على Enter
+    document.getElementById('sitePass').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') checkAccess();
+    });
+
     function updateAllPasswords() {
         const input = document.getElementById('accountsInput').value;
         const newPass = document.getElementById('newPassword').value;
         const output = document.getElementById('outputArea');
         const container = document.getElementById('resultContainer');
 
-        if(!input || !newPass) {
-            alert("من فضلك أدخل الحسابات وكلمة المرور الجديدة");
+        if(!input.trim() || !newPass.trim()) {
+            alert("من فضلك أدخل البيانات المطلوبة");
             return;
         }
 
         const lines = input.trim().split('\n');
-        let result = [];
-
-        lines.forEach(line => {
-            // تقسيم السطر عند النقطتين " : "
+        let result = lines.map(line => {
             if(line.includes(':')) {
                 let parts = line.split(':');
                 let username = parts[0].trim();
-                // استبدال الجزء الثاني بكلمة المرور الجديدة
-                result.push(`${username} : ${newPass}`);
-            } else {
-                // إذا كان السطر لا يحتوي على : نتركه كما هو أو نضيف تنبيه
-                result.push(line);
+                return `${username} : ${newPass}`;
             }
+            return line; // إذا كان السطر لا يحتوي على : يتركه كما هو
         });
 
         output.textContent = result.join('\n');
@@ -81,11 +165,11 @@
 
     function copyResult() {
         const text = document.getElementById('outputArea').textContent;
-        navigator.clipboard.writeText(text);
-        alert("تم نسخ الحسابات المحدثة إلى الحافظة!");
+        navigator.clipboard.writeText(text).then(() => {
+            alert("تم نسخ القائمة الجديدة بنجاح!");
+        });
     }
 </script>
 
 </body>
-
 </html>
