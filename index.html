@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELDORADO V95 (OPEN SALES)</title>
+    <title>ELDORADO V96 (PRIORITY FIX)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
@@ -317,19 +317,28 @@
         }
 
         function updateStock(id, c) {
-            // FIX: Removed permission check so EVERYONE can sell
             const idx = inventory.findIndex(x=>String(x.id) == String(id));
             if(idx > -1) {
-                if(c<0 && inventory[idx].stock>0) {
-                    let profit = (inventory[idx].price*0.85)-inventory[idx].cost;
-                    db.ref('dailyStats/profit').set(dailyStats.profit + profit);
-                    sendDiscordLog("💰 بيع", `تم بيع ${inventory[idx].name}`, 15105570);
-                    let h = salesHistory[inventory[idx].name] || {count:0, profit:0};
-                    h.count++; h.profit+=profit;
-                    db.ref('salesHistory/'+inventory[idx].name).set(h);
-                }
-                inventory[idx].stock = Math.max(0, parseInt(inventory[idx].stock)+c);
+                // 1. UPDATE DB FIRST (Priority)
+                let oldStock = parseInt(inventory[idx].stock);
+                let newStock = Math.max(0, oldStock + c);
+                inventory[idx].stock = newStock;
                 db.ref('inventory').set(inventory);
+
+                // 2. THEN LOG (Background)
+                if(c < 0 && oldStock > 0) {
+                    try {
+                        let profit = (inventory[idx].price*0.85)-inventory[idx].cost;
+                        db.ref('dailyStats/profit').set(dailyStats.profit + profit);
+                        sendDiscordLog("💰 بيع", `تم بيع ${inventory[idx].name}`, 15105570);
+                        
+                        // Sanitize Key
+                        let safeName = inventory[idx].name.replace(/[.#$/[\]]/g, '_');
+                        let h = salesHistory[safeName] || {count:0, profit:0};
+                        h.count++; h.profit+=profit;
+                        db.ref('salesHistory/'+safeName).set(h);
+                    } catch(e) { console.log("Log Error", e); }
+                }
             }
         }
 
@@ -411,8 +420,8 @@
         function createTrail(e) { const dot = document.createElement('div'); dot.className = 'trail-dot'; dot.style.left = e.pageX + 'px'; dot.style.top = e.pageY + 'px'; document.body.appendChild(dot); setTimeout(() => dot.remove(), 800); }
         function playAudio(type) { console.log("Sound: " + type); }
         function renderCRM() { const s = document.getElementById('crmSearch').value.toLowerCase(); const l = document.getElementById('crmList'); l.innerHTML=''; customers.forEach((c,i)=>{ if(c.name.toLowerCase().includes(s)) { let cls = c.status==='VIP'?'tag-vip':c.status==='Trash'?'tag-trash':'tag-normal'; l.innerHTML+=`<div class="crm-item"><div><span class="crm-name">${c.name}</span><span class="tag ${cls}">${c.status}</span></div><button class="btn-crm-del" onclick="delCust(${i})">🗑️</button></div>`; }}); }
-        function addCustomer() { const n=document.getElementById('crmNameInput').value, s=document.getElementById('crmStatusSelect').value; if(n) { customers.push({name:n, status:s}); db.ref('customers').set(customers); document.getElementById('crmNameInput').value=''; renderCRM(); } }
-        function delCust(i) { if(confirm("مسح?")) { customers.splice(i,1); db.ref('customers').set(customers); renderCRM(); } }
+        function addCustomer() { const n=document.getElementById('crmNameInput').value, s=document.getElementById('crmStatusSelect').value; if(n) { const newCust = [...customers, {name:n, status:s}]; db.ref('customers').set(newCust); document.getElementById('crmNameInput').value=''; } }
+        function delCust(i) { if(confirm("مسح?")) { customers.splice(i,1); db.ref('customers').set(customers); } }
         function toggleAdminPanel() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; renderUserList(); }
         function renderBestSellers() { const b=document.getElementById('bestSellersBody'); b.innerHTML=''; Object.entries(salesHistory).sort((a,x)=>x[1].count-a[1].count).forEach((e,i)=>{ b.innerHTML+=`<tr><td>${i+1}</td><td>${e[0]}</td><td>${e[1].count}</td><td>$${e[1].profit.toFixed(2)}</td><td><button class="btn-del" onclick="db.ref('salesHistory/${e[0]}').remove()">X</button></td></tr>`; }); }
         function toggleSection(id) { const el=document.getElementById(id); if(el) { el.classList.toggle('collapsed'); if(el.classList.contains('collapsed')) collapsedState.add(id); else collapsedState.delete(id); } }
