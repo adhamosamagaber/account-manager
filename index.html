@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELDORADO V91 (ONLINE TEAM)</title>
-    
+    <title>ELDORADO V92 (COPY FIX)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* CSS from V90 (Kept exactly the same) */
+        /* SAME CSS FROM V90 - NO CHANGES NEEDED IN STYLE */
         :root { --eldorado-gold:#ffbd00; --roblox-red:#ff4757; --success:#2ecc71; --purple:#8e44ad; --cyan:#00cec9; --grey:#95a5a6; --glass-bg:rgba(30,35,45,0.6); --glass-border:1px solid rgba(255,255,255,0.08); --glass-card:rgba(255,255,255,0.03); --card-shadow:0 8px 32px 0 rgba(0,0,0,0.3); }
         body { font-family:'Cairo',sans-serif; margin:0; background:radial-gradient(circle at top right,#1a2236,#0f1219 60%,#050505); color:#eee; overflow-x:hidden; min-height:100vh; }
         #particles-js { position:fixed; width:100%; height:100%; z-index:-1; opacity:0.2; }
@@ -141,6 +140,7 @@
     <div id="appContainer">
         <div class="sidebar">
             <div style="font-size:2em; color:var(--eldorado-gold); margin-bottom:20px;" id="myRankIcon"><i class="fas fa-crown"></i></div>
+            <div class="nav-btn" onclick="saveData()" title="حفظ"><i class="fas fa-save"></i></div>
             <div class="nav-btn" onclick="openBestSellersModal()" title="الأكثر مبيعاً"><i class="fas fa-trophy" style="color:#f1c40f"></i></div>
             <div class="nav-btn" onclick="openCRMModal()" title="العملاء"><i class="fas fa-users"></i></div>
             <div class="nav-btn" onclick="openCalcModal()" title="حاسبة"><i class="fas fa-calculator"></i></div>
@@ -366,7 +366,7 @@
                         let bulk = ''; if(can('sell')) { 
                             let delIcon = isTrash ? 'fa-times' : 'fa-trash'; let showDel = isTrash ? can('delete_perm') : can('sell');
                             let restoreGrp = isTrash && can('delete_perm') ? `<button class="btn-bulk btn-bulk-restore" onclick="restoreGroup(event,'${gName}','${cName}','${iName}')" title="استرجاع الكل"><i class="fas fa-recycle"></i></button>` : '';
-                            bulk = `<button class="btn-bulk btn-bulk-copy" onclick="copyGroupCreds(event,'${gName}','${cName}','${iName}')"><i class="fas fa-copy"></i></button>${restoreGrp}${showDel ? `<button class="btn-bulk btn-bulk-del" onclick="deleteGroup(event,'${gName}','${cName}','${iName}')"><i class="fas ${delIcon}"></i></button>`:''}`;
+                            bulk = `<button class="btn-bulk btn-bulk-copy" onclick="event.stopPropagation(); copyGroupCreds('${gName}','${cName}','${iName}')"><i class="fas fa-copy"></i></button>${restoreGrp}${showDel ? `<button class="btn-bulk btn-bulk-del" onclick="deleteGroup(event,'${gName}','${cName}','${iName}')"><i class="fas ${delIcon}"></i></button>`:''}`;
                         }
                         html += `<div class="item-group ${isGCol}" id="${grpId}"><div class="item-group-header" onclick="toggleSection('${grpId}')"><span>${iName}</span><div style="display:flex; align-items:center; gap:5px">${bulk}<span class="group-badge" style="margin-left:5px">${items.length}</span><i class="fas fa-chevron-down"></i></div></div><div class="group-grid">`;
                         items.forEach(i => {
@@ -416,7 +416,11 @@
         }
         function permanentDelete(id) { if(confirm("نهائي؟")) { const n = inventory.filter(x=>x.id!=id); db.ref('inventory').set(n); } }
 
+        function deleteGroup(e, g, c, n) { e.stopPropagation(); const isT = g==='🗑️ Empty Accounts'; if(isT && !can('delete_perm')) return; if(!isT && !can('sell')) return; if(!confirm("متأكد؟")) return; if (isT) { const newInv = inventory.filter(i=>!(i.game===g && i.category===c && i.name===n)); db.ref('inventory').set(newInv); } else { inventory.forEach(i=>{ if(i.game===g && i.category===c && i.name===n) { i.originalGame=i.game; i.originalCategory=i.category; i.game='🗑️ Empty Accounts'; i.category='Recycle Bin'; } }); db.ref('inventory').set(inventory); } }
+        function restoreGroup(e, g, c, n) { e.stopPropagation(); if(!can('delete_perm')) return; if(!confirm("استرجاع المجموعة؟")) return; inventory.forEach(i=>{ if(i.game===g && i.category===c && i.name===n) { i.game=i.originalGame; i.category=i.originalCategory; } }); db.ref('inventory').set(inventory); }
+
         // --- UTILS ---
+        function copyGroupCreds(g, c, n) { const txt = inventory.filter(i=>i.game===g && i.category===c && i.name===n).map(i=>i.creds).join('\n'); navigator.clipboard.writeText(txt); showToast("تم النسخ 📋"); }
         function setupPermissions() { const role = ROLES_CONFIG[currentRank]; document.getElementById('myRankIcon').innerHTML = `${role.icon} <span style="font-size:0.5em">${currentRank}</span>`; document.getElementById('myRankIcon').style.color = role.color; if(role.perm < 3) document.querySelector('.admin-only').style.display = 'none'; else document.querySelector('.admin-only').style.display = 'flex'; }
         function can(action) { const lvl = ROLES_CONFIG[currentRank].perm; if (action === 'ban') return lvl >= 4; if (action === 'kick') return lvl >= 3; if (action === 'delete_perm') return lvl >= 3; if (action === 'sell') return lvl >= 2; if (action === 'add') return lvl >= 1; return false; }
         function updateDailyProgress() { const p = Math.min((dailyStats.profit / dailyStats.goal) * 100, 100); document.getElementById('goalBar').style.width = p + "%"; document.getElementById('dailyGoalText').innerText = dailyStats.goal; document.getElementById('todayProfitText').innerText = dailyStats.profit.toFixed(2); }
@@ -428,9 +432,9 @@
         function openBestSellersModal() { document.getElementById('bestSellersModal').style.display='block'; document.getElementById('overlay').style.display='block'; renderBestSellers(); }
         function closeModals() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); document.getElementById('overlay').style.display='none'; }
         
-        function renderCRM() { const l = document.getElementById('crmList'); l.innerHTML = ''; customers.forEach((c,i)=>{ l.innerHTML += `<div class="crm-item"><span>${c.name} <small>${c.status}</small></span><button class="btn-del" onclick="delCust(${i})">X</button></div>`; }); }
-        function addCustomer() { const n=document.getElementById('crmNameInput').value, s=document.getElementById('crmStatusSelect').value; if(n) db.ref('customers').set([...customers, {name:n, status:s}]); }
-        function delCust(i) { if(confirm("مسح؟")) { customers.splice(i,1); db.ref('customers').set(customers); } }
+        function renderCRM() { const s = document.getElementById('crmSearch').value.toLowerCase(); const l = document.getElementById('crmList'); l.innerHTML=''; customers.forEach((c,i)=>{ if(c.name.toLowerCase().includes(s)) { let cls = c.status==='VIP'?'tag-vip':c.status==='Trash'?'tag-trash':'tag-normal'; l.innerHTML+=`<div class="crm-item"><div><span class="crm-name">${c.name}</span><span class="tag ${cls}">${c.status}</span></div><button class="btn-crm-del" onclick="delCust(${i})">🗑️</button></div>`; }}); }
+        function addCustomer() { const n=document.getElementById('crmNameInput').value, s=document.getElementById('crmStatusSelect').value; if(n) { const newCust = [...customers, {name:n, status:s}]; db.ref('customers').set(newCust); document.getElementById('crmNameInput').value=''; } }
+        function delCust(i) { if(confirm("مسح?")) { customers.splice(i,1); db.ref('customers').set(customers); } }
         
         function renderBestSellers() { 
             const b=document.getElementById('bestSellersBody'); b.innerHTML=''; 
@@ -450,6 +454,7 @@
         function showToast(m) { const t=document.getElementById("toast"); t.innerText=m; t.className="show"; setTimeout(()=>t.className="",3000); }
         function createTrail(e) { const dot = document.createElement('div'); dot.className = 'trail-dot'; dot.style.left = e.pageX + 'px'; dot.style.top = e.pageY + 'px'; document.body.appendChild(dot); setTimeout(() => dot.remove(), 800); }
         function playAudio(type) { console.log("Sound: " + type); }
+        function editPrice(id) { const i=inventory.find(x=>x.id==id); if(i) { let p=prompt("سعر جديد:", i.price); if(p) { i.price=parseFloat(p); db.ref('inventory').set(inventory); } } }
 
     </script>
 </body>
