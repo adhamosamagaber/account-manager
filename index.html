@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELDORADO V94 (STOCK FIX)</title>
+    <title>ELDORADO V95 (OPEN SALES)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
@@ -231,6 +231,7 @@
         const db = firebase.database();
 
         const ROLES_CONFIG = { 'King': { color:'#ffbd00', icon:'👑', perm:4 }, 'Master': { color:'#8e44ad', icon:'⚜️', perm:3 }, 'Pro': { color:'#00cec9', icon:'⭐', perm:2 }, 'Rookie': { color:'#95a5a6', icon:'🛡️', perm:1 } };
+        const DEFAULT_AUTH = { "adham zng": "king", "belal zng": "mob", "amar zng": "fob", "adham normal": "sob", "belal kersh": "dob" };
         const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1461729733124423702/FydZIFQDx7J0Azn0mhLlAa0WSpYJ9A5YrbOlNpuwwQAZeP0bCB3hGb_cD7DyTSQtvXne";
         
         let inventory = [], dailyStats = {profit:0, goal:50}, salesHistory = {}, customers = [], usersData = {};
@@ -316,10 +317,7 @@
         }
 
         function updateStock(id, c) {
-            // FIX: Allow decrement if rank is Pro (2) or higher
-            if(c<0 && !can('sell')) { alert("رتبة قليلة!"); return; }
-            
-            // FIX: Convert ID to string for robust finding
+            // FIX: Removed permission check so EVERYONE can sell
             const idx = inventory.findIndex(x=>String(x.id) == String(id));
             if(idx > -1) {
                 if(c<0 && inventory[idx].stock>0) {
@@ -421,6 +419,7 @@
         function toggleHideZero() { hideZeroStock=!hideZeroStock; render(); }
         function copy(t) { navigator.clipboard.writeText(t); showToast("Copied"); }
         function showToast(m) { const t=document.getElementById("toast"); t.innerText=m; t.className="show"; setTimeout(()=>t.className="",3000); }
+        function saveData() { db.ref('inventory').set(inventory); showToast("تم الحفظ (Firebase) ✅"); }
 
         function startStatusCheck() {
             setInterval(() => {
