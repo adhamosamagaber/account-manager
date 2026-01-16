@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELDORADO V93 (QUICK ADD)</title>
-    
+    <title>ELDORADO V94 (STOCK FIX)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -85,7 +82,7 @@
         .btn-bulk-copy:hover { border-color: var(--eldorado-gold); color: var(--eldorado-gold); }
         .btn-bulk-del:hover { background: #e74c3c; color: white; }
         .btn-bulk-restore:hover { background: var(--success); color: black; }
-        .btn-quick-add { border: 1px solid var(--eldorado-gold); color: var(--eldorado-gold); background: transparent; } 
+        .btn-quick-add { border: 1px solid var(--eldorado-gold); color: var(--eldorado-gold); background: transparent; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; margin-left: 5px;} 
         .btn-quick-add:hover { background: var(--eldorado-gold); color: black; }
 
         .trash-section { border: 1px solid rgba(255, 71, 87, 0.3) !important; background: rgba(255, 71, 87, 0.02) !important; }
@@ -234,7 +231,6 @@
         const db = firebase.database();
 
         const ROLES_CONFIG = { 'King': { color:'#ffbd00', icon:'👑', perm:4 }, 'Master': { color:'#8e44ad', icon:'⚜️', perm:3 }, 'Pro': { color:'#00cec9', icon:'⭐', perm:2 }, 'Rookie': { color:'#95a5a6', icon:'🛡️', perm:1 } };
-        const DEFAULT_AUTH = { "adham zng": "king", "belal zng": "mob", "amar zng": "fob", "adham normal": "sob", "belal kersh": "dob" };
         const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1461729733124423702/FydZIFQDx7J0Azn0mhLlAa0WSpYJ9A5YrbOlNpuwwQAZeP0bCB3hGb_cD7DyTSQtvXne";
         
         let inventory = [], dailyStats = {profit:0, goal:50}, salesHistory = {}, customers = [], usersData = {};
@@ -311,7 +307,7 @@
             closeModals(); sendDiscordLog("➕ إضافة", `تم إضافة ${newItems.length} أكونت (${n})`, 3066993);
         }
 
-        // QUICK ADD FUNCTION (V93 FEATURE)
+        // QUICK ADD
         function openQuickAdd(g, c, n) {
             document.getElementById('gameSelect').value = g;
             document.getElementById('subCategory').value = c;
@@ -320,8 +316,10 @@
         }
 
         function updateStock(id, c) {
+            // FIX: Allow decrement if rank is Pro (2) or higher
             if(c<0 && !can('sell')) { alert("رتبة قليلة!"); return; }
-            // ID FIX: Ensure strict/loose comparison works by using loose check first or string conversion
+            
+            // FIX: Convert ID to string for robust finding
             const idx = inventory.findIndex(x=>String(x.id) == String(id));
             if(idx > -1) {
                 if(c<0 && inventory[idx].stock>0) {
@@ -367,15 +365,15 @@
                         let bulk = ''; if(can('sell')) { 
                             let delIcon = isTrash ? 'fa-times' : 'fa-trash'; let showDel = isTrash ? can('delete_perm') : can('sell');
                             let restoreGrp = isTrash && can('delete_perm') ? `<button class="btn-bulk btn-bulk-restore" onclick="restoreGroup(event,'${gName}','${cName}','${iName}')" title="استرجاع الكل"><i class="fas fa-recycle"></i></button>` : '';
-                            // Added Quick Add Button Here
+                            // Quick Add Button
                             let quickAddBtn = !isTrash && can('add') ? `<button class="btn-bulk btn-quick-add" onclick="event.stopPropagation(); openQuickAdd('${gName}', '${cName}', '${iName}')" title="إضافة سريعة"><i class="fas fa-plus"></i></button>` : '';
                             
-                            bulk = `${quickAddBtn} <button class="btn-bulk btn-bulk-copy" onclick="copyGroupCreds(event,'${gName}','${cName}','${iName}')"><i class="fas fa-copy"></i></button>${restoreGrp}${showDel ? `<button class="btn-bulk btn-bulk-del" onclick="deleteGroup(event,'${gName}','${cName}','${iName}')"><i class="fas ${delIcon}"></i></button>`:''}`;
+                            bulk = `${quickAddBtn} <button class="btn-bulk btn-bulk-copy" onclick="event.stopPropagation(); copyGroupCreds('${gName}','${cName}','${iName}')"><i class="fas fa-copy"></i></button>${restoreGrp}${showDel ? `<button class="btn-bulk btn-bulk-del" onclick="deleteGroup(event,'${gName}','${cName}','${iName}')"><i class="fas ${delIcon}"></i></button>`:''}`;
                         }
                         html += `<div class="item-group ${isGCol}" id="${grpId}"><div class="item-group-header" onclick="toggleSection('${grpId}')"><span>${iName}</span><div style="display:flex; align-items:center; gap:5px">${bulk}<span class="group-badge" style="margin-left:5px">${items.length}</span><i class="fas fa-chevron-down"></i></div></div><div class="group-grid">`;
                         items.forEach(i => {
                             let btns = ''; if(isTrash) { if(can('delete_perm')) btns = `<button class="btn-restore" onclick="restoreItem('${i.id}')"><i class="fas fa-recycle"></i></button><button class="btn-del" onclick="permanentDelete('${i.id}')"><i class="fas fa-times"></i></button>`; } else { if(can('sell')) btns = `<button class="btn-del" onclick="softDelete('${i.id}')"><i class="fas fa-trash"></i></button>`; }
-                            // ID Passed as string with quotes
+                            // Fix button update stock logic to treat ID as string
                             let stockHtml = ''; if(can('add')) stockHtml = `<div class="stock-control"><button class="stock-btn btn-minus" onclick="updateStock('${i.id}',-1)">-</button><span class="stock-val" style="color:${i.stock===0?'#e74c3c':i.stock<3?'#f1c40f':'white'}">${i.stock}</span><button class="stock-btn btn-plus" onclick="updateStock('${i.id}',1)">+</button></div>`; else stockHtml = `<div class="stock-control"><span class="stock-val">${i.stock}</span></div>`;
                             html += `<div class="item-card" id="card-${i.id}"><div class="card-top"><div class="price-area"><span class="price-val">$${i.price}</span><button class="edit-price-btn" onclick="editPrice('${i.id}')">✏️</button></div><div>${btns}</div></div><div class="item-creds" onclick="copy('${i.creds}')">${i.creds.substring(0,15)}...</div>${stockHtml}</div>`;
                         });
@@ -398,32 +396,41 @@
         function permanentDelete(id) { if(confirm("نهائي؟")) { const n = inventory.filter(x=>String(x.id)!=String(id)); db.ref('inventory').set(n); } }
         function restoreGroup(e, g, c, n) { e.stopPropagation(); if(!can('delete_perm')) return; if(!confirm("استرجاع المجموعة؟")) return; inventory.forEach(i=>{ if(i.game===g && i.category===c && i.name===n) { i.game=i.originalGame; i.category=i.originalCategory; } }); db.ref('inventory').set(inventory); }
         function deleteGroup(e, g, c, n) { e.stopPropagation(); const isT = g==='🗑️ Empty Accounts'; if(isT && !can('delete_perm')) return; if(!isT && !can('sell')) return; if(!confirm("متأكد؟")) return; if (isT) { const newInv = inventory.filter(i=>!(i.game===g && i.category===c && i.name===n)); db.ref('inventory').set(newInv); } else { inventory.forEach(i=>{ if(i.game===g && i.category===c && i.name===n) { i.originalGame=i.game; i.originalCategory=i.category; i.game='🗑️ Empty Accounts'; i.category='Recycle Bin'; } }); db.ref('inventory').set(inventory); } }
-        function copyGroupCreds(e,g,c,n) { e.stopPropagation(); const txt = inventory.filter(i=>i.game===g&&i.category===c&&i.name===n).map(i=>i.creds).join('\n'); navigator.clipboard.writeText(txt); showToast("تم النسخ 📋"); }
+        function copyGroupCreds(g, c, n) { const txt = inventory.filter(i=>i.game===g&&i.category===c&&i.name===n).map(i=>i.creds).join('\n'); navigator.clipboard.writeText(txt); showToast("تم النسخ 📋"); }
         function setupPermissions() { const role = ROLES_CONFIG[currentRank]; document.getElementById('myRankIcon').innerHTML = `${role.icon} <span style="font-size:0.5em">${currentRank}</span>`; document.getElementById('myRankIcon').style.color = role.color; if(role.perm < 3) document.querySelector('.admin-only').style.display = 'none'; else document.querySelector('.admin-only').style.display = 'flex'; }
         function can(action) { const lvl = ROLES_CONFIG[currentRank].perm; if (action === 'ban') return lvl >= 4; if (action === 'kick') return lvl >= 3; if (action === 'delete_perm') return lvl >= 3; if (action === 'sell') return lvl >= 2; if (action === 'add') return lvl >= 1; return false; }
         function updateDailyProgress() { const p = Math.min((dailyStats.profit / dailyStats.goal) * 100, 100); document.getElementById('goalBar').style.width = p + "%"; document.getElementById('dailyGoalText').innerText = dailyStats.goal; document.getElementById('todayProfitText').innerText = dailyStats.profit.toFixed(2); }
         function setDailyGoal() { let n = prompt("الهدف:", dailyStats.goal); if(n) db.ref('dailyStats/goal').set(parseFloat(n)); }
         function openAddModal() { document.getElementById('addModal').style.display='block'; document.getElementById('overlay').style.display='block'; }
         function openCalcModal() { document.getElementById('calcModal').style.display='block'; document.getElementById('overlay').style.display='block'; }
-        function openCRMModal() { document.getElementById('crmModal').style.display='block'; document.getElementById('overlay').style.display='block'; renderCRM(); }
         function openBestSellersModal() { document.getElementById('bestSellersModal').style.display='block'; document.getElementById('overlay').style.display='block'; renderBestSellers(); }
+        function openCRMModal() { document.getElementById('crmModal').style.display='block'; document.getElementById('overlay').style.display='block'; renderCRM(); }
         function closeModals() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); document.getElementById('overlay').style.display='none'; }
+        function calcFwd() { const p=parseFloat(document.getElementById('calcPrice').value)||0; document.getElementById('calcNet').value = (p*0.85).toFixed(2); document.getElementById('calc-fee').innerText = `-$${(p*0.15).toFixed(2)}`; }
+        function calcReverse() { const n=parseFloat(document.getElementById('calcNet').value)||0; document.getElementById('calcPrice').value = (n/0.85).toFixed(2); }
+        function toggleBulkMode() { const b = document.getElementById('bulkToggle').checked; document.getElementById('singleInputs').style.display = b?'none':'block'; document.getElementById('bulkInputs').style.display = b?'block':'none'; }
+        function editPrice(id) { const i=inventory.find(x=>String(x.id)==String(id)); if(i) { let p=prompt("سعر جديد:", i.price); if(p) { i.price=parseFloat(p); db.ref('inventory').set(inventory); } } }
+        function createTrail(e) { const dot = document.createElement('div'); dot.className = 'trail-dot'; dot.style.left = e.pageX + 'px'; dot.style.top = e.pageY + 'px'; document.body.appendChild(dot); setTimeout(() => dot.remove(), 800); }
+        function playAudio(type) { console.log("Sound: " + type); }
         function renderCRM() { const s = document.getElementById('crmSearch').value.toLowerCase(); const l = document.getElementById('crmList'); l.innerHTML=''; customers.forEach((c,i)=>{ if(c.name.toLowerCase().includes(s)) { let cls = c.status==='VIP'?'tag-vip':c.status==='Trash'?'tag-trash':'tag-normal'; l.innerHTML+=`<div class="crm-item"><div><span class="crm-name">${c.name}</span><span class="tag ${cls}">${c.status}</span></div><button class="btn-crm-del" onclick="delCust(${i})">🗑️</button></div>`; }}); }
-        function addCustomer() { const n=document.getElementById('crmNameInput').value, s=document.getElementById('crmStatusSelect').value; if(n) { const newCust = [...customers, {name:n, status:s}]; db.ref('customers').set(newCust); document.getElementById('crmNameInput').value=''; } }
-        function delCust(i) { if(confirm("مسح?")) { customers.splice(i,1); db.ref('customers').set(customers); } }
+        function addCustomer() { const n=document.getElementById('crmNameInput').value, s=document.getElementById('crmStatusSelect').value; if(n) { customers.push({name:n, status:s}); db.ref('customers').set(customers); document.getElementById('crmNameInput').value=''; renderCRM(); } }
+        function delCust(i) { if(confirm("مسح?")) { customers.splice(i,1); db.ref('customers').set(customers); renderCRM(); } }
+        function toggleAdminPanel() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; renderUserList(); }
         function renderBestSellers() { const b=document.getElementById('bestSellersBody'); b.innerHTML=''; Object.entries(salesHistory).sort((a,x)=>x[1].count-a[1].count).forEach((e,i)=>{ b.innerHTML+=`<tr><td>${i+1}</td><td>${e[0]}</td><td>${e[1].count}</td><td>$${e[1].profit.toFixed(2)}</td><td><button class="btn-del" onclick="db.ref('salesHistory/${e[0]}').remove()">X</button></td></tr>`; }); }
         function toggleSection(id) { const el=document.getElementById(id); if(el) { el.classList.toggle('collapsed'); if(el.classList.contains('collapsed')) collapsedState.add(id); else collapsedState.delete(id); } }
         function toggleHideZero() { hideZeroStock=!hideZeroStock; render(); }
-        function toggleAdminPanel() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; renderUserList(); }
-        function toggleBulkMode() { const b = document.getElementById('bulkToggle').checked; document.getElementById('singleInputs').style.display = b?'none':'block'; document.getElementById('bulkInputs').style.display = b?'block':'none'; }
-        function calcFwd() { const p=parseFloat(document.getElementById('calcPrice').value)||0; document.getElementById('calcNet').value = (p*0.85).toFixed(2); document.getElementById('calc-fee').innerText = `-$${(p*0.15).toFixed(2)}`; }
-        function calcReverse() { const n=parseFloat(document.getElementById('calcNet').value)||0; document.getElementById('calcPrice').value = (n/0.85).toFixed(2); }
         function copy(t) { navigator.clipboard.writeText(t); showToast("Copied"); }
         function showToast(m) { const t=document.getElementById("toast"); t.innerText=m; t.className="show"; setTimeout(()=>t.className="",3000); }
-        function createTrail(e) { const dot = document.createElement('div'); dot.className = 'trail-dot'; dot.style.left = e.pageX + 'px'; dot.style.top = e.pageY + 'px'; document.body.appendChild(dot); setTimeout(() => dot.remove(), 800); }
-        function playAudio(type) { console.log("Sound: " + type); }
-        function editPrice(id) { const i=inventory.find(x=>String(x.id)==String(id)); if(i) { let p=prompt("سعر جديد:", i.price); if(p) { i.price=parseFloat(p); db.ref('inventory').set(inventory); } } }
-        function saveData() { db.ref('inventory').set(inventory); showToast("تم الحفظ (Firebase) ✅"); }
+
+        function startStatusCheck() {
+            setInterval(() => {
+                userConfig = JSON.parse(localStorage.getItem('users_config_db')); 
+                const myData = userConfig[currentUser];
+                if (myData.banned) { document.getElementById('appContainer').style.display = 'none'; document.getElementById('lockScreen').style.display = 'flex'; document.getElementById('lockMessage').innerText = "تم حظرك نهائياً ⛔"; localStorage.removeItem('active_user'); currentUser = null; } 
+                else if (myData.kicked) { document.getElementById('appContainer').style.display = 'none'; document.getElementById('lockScreen').style.display = 'flex'; document.getElementById('lockMessage').innerText = "تم طردك (Kicked) 🥾"; localStorage.removeItem('active_user'); currentUser = null; userConfig[currentUser].kicked = false; saveUserConfig(); }
+                if (myData.rank !== currentRank) { currentRank = myData.rank; setupPermissions(); render(); showToast(`رتبتك الجديدة: ${currentRank}`); }
+            }, 2000);
+        }
 
     </script>
 </body>
